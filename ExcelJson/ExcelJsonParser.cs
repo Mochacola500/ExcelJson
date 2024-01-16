@@ -31,7 +31,7 @@ namespace ExcelJson
             } while (reader.NextResult());
         }
 
-        public ExcelJsonField ToExcelJsonResult(IExcelDataReader reader, string sheetName)
+        ExcelJsonField ToExcelJsonResult(IExcelDataReader reader, string sheetName)
         {
             var definitions = ReadDefinitions(reader);
             var headerRow = ReadHeaderRow(sheetName, definitions);

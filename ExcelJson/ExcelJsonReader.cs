@@ -48,33 +48,26 @@ namespace ExcelJson
                 {
                     if (prevName == "")
                     {
-                        throw new Exception($"Definition is required befor the array token.\nName:{sheetName}\nIndex:{i}");
+                        throw new ArrayPlaceholderException(sheetName, i);
                     }
                     if (headerHashSet.TryGetValue(prevName, out var array))
                     {
-                        ++array.Length;
+                        ++array.Length; 
                     }
                     continue;
                 }
-                var nameAndType = definition.Split(m_Options.TypeToken, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                var nameAndType = definition.Split(m_Options.TypeToken, StringSplitOptions.TrimEntries);
                 // In most cases, length is 2.
                 if (nameAndType.Length != 2)
                 {
-                    if (nameAndType.Length == 1)
-                    {
-                        throw new Exception($"Missing type token.\nTableName:{sheetName}\nDefinition:{definition}\nToken:{m_Options.TypeToken}");
-                    }
-                    else
-                    {
-                        throw new Exception($"Too many type token exist.\nTableName:{sheetName}\nDefinition:{definition}\nToken:{m_Options.TypeToken}");
-                    }
+                    throw new TypeTokenException(sheetName, definition, m_Options.TypeToken);
                 }
                 var type = nameAndType[1];
                 var name = nameAndType[0];
                 var headerField = new HeaderField(type, name, 1);
                 if (!headerHashSet.TryAdd(name, headerField))
                 {
-                    throw new Exception($"Duplicated definition name.\nTableName:{sheetName}\nDefinition:{definition}");
+                    throw new DuplicatedException(sheetName, definition);
                 }
                 prevName = name;
             }

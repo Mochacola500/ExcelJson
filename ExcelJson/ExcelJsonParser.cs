@@ -1,7 +1,6 @@
 ﻿using ExcelDataReader;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using Microsoft.VisualBasic.FileIO;
 
 namespace ExcelJson
 {
@@ -55,7 +54,7 @@ namespace ExcelJson
                         var jArray = new JArray();
                         for (int j = i; j < field.Length; ++j)
                         {
-                            AddPrimitiveToArray(jArray, row[j], field.Type);
+                            AddPrimitiveToArray(jArray, field.Type, row[j]);
                         }
                         jObject.Add(field.Name, jArray);
                     }
@@ -69,26 +68,32 @@ namespace ExcelJson
         // Need optimization.
         void AddObject(JObject root, string value, HeaderField field)
         {
-            if (field.Type == "int")
-            {
-                root.Add(field.Name, int.Parse(value));
-            }
-            else
-            {
-                root.Add(field.Name, value);
-            }
+            root.Add(field.Name, Parse(field.Type, value));
         }
 
         // Need optimization.
-        void AddPrimitiveToArray(JArray root,string value, string type)
+        void AddPrimitiveToArray(JArray root, string type, string value)
+        {
+            root.Add(Parse(type, value));
+        }
+
+        JToken Parse(string type, string value)
         {
             if (type == "int")
             {
-                root.Add(int.Parse(value));
+                return int.Parse(value);
+            }
+            else if (type == "float")
+            {
+                return float.Parse(value);
+            }
+            else if (type == "bool")
+            {
+                return bool.Parse(value);
             }
             else
             {
-                root.Add(value);
+                return value;
             }
         }
     }

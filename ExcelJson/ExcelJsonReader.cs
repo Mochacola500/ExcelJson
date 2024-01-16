@@ -51,7 +51,6 @@ namespace ExcelJson
                     {
                         throw new Exception($"Definition is required befor the array token.\nName:{sheetName}\nIndex:{i}");
                     }
-                    prevDefinition = definition;
                     ++arrayLength;
                     continue;
                 }
@@ -76,6 +75,7 @@ namespace ExcelJson
                     throw new Exception($"Duplicated definition name.\nTableName:{sheetName}\nDefinition:{definition}");
                 }
                 arrayLength = 1;
+                prevDefinition = definition;
             }
             var headerArray = headerHashSet.ToArray();
             return new(sheetName, headerArray);

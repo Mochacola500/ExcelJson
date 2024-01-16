@@ -4,7 +4,7 @@
     {
         public string Type { get; }
         public string Name { get; }
-        public int Length { get; }
+        public int Length { get; set; }
 
         public HeaderField(string type, string name, int length)
         {

@@ -33,9 +33,8 @@ namespace ExcelJson
         protected HeaderRow ReadHeaderRow(string sheetName, List<string> definitions)
         {
             int count = definitions.Count;
-            var headerHashSet = new HashSet<HeaderField>(count);
-            var prevDefinition = "";
-            int arrayLength = 1;
+            var headerHashSet = new Dictionary<string, HeaderField>(count);
+            var prevName = "";
 
             for (int i = 0; i < count; ++i)
             {
@@ -47,11 +46,14 @@ namespace ExcelJson
                 }
                 if (definition == m_Options.ArrayPlaceholder)
                 {
-                    if (prevDefinition == "")
+                    if (prevName == "")
                     {
                         throw new Exception($"Definition is required befor the array token.\nName:{sheetName}\nIndex:{i}");
                     }
-                    ++arrayLength;
+                    if (headerHashSet.TryGetValue(prevName, out var array))
+                    {
+                        ++array.Length;
+                    }
                     continue;
                 }
                 var nameAndType = definition.Split(m_Options.TypeToken, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
@@ -69,15 +71,14 @@ namespace ExcelJson
                 }
                 var type = nameAndType[1];
                 var name = nameAndType[0];
-                var headerField = new HeaderField(type, name, arrayLength);
-                if (!headerHashSet.Add(headerField))
+                var headerField = new HeaderField(type, name, 1);
+                if (!headerHashSet.TryAdd(name, headerField))
                 {
                     throw new Exception($"Duplicated definition name.\nTableName:{sheetName}\nDefinition:{definition}");
                 }
-                arrayLength = 1;
-                prevDefinition = definition;
+                prevName = name;
             }
-            var headerArray = headerHashSet.ToArray();
+            var headerArray = headerHashSet.Values.ToArray();
             return new(sheetName, headerArray);
         }
 

@@ -1,24 +1,22 @@
 ﻿using ExcelDataReader;
 using Newtonsoft.Json.Linq;
-using ExcelJson.DataModel;
 using Newtonsoft.Json;
 
 namespace ExcelJson
 {
     public class ExcelJsonParser : ExcelJsonReader
     {
-        ExcelJsonParser(ExcelJsonOptions options) : base(options)
+        public ExcelJsonParser() : this(new())
         {
 
         }
 
-        public static ExcelJsonParser Create(ExcelJsonOptions? options = null)
+        public ExcelJsonParser(ExcelJsonOptions options) : base(options)
         {
-            options ??= new();
-            return new ExcelJsonParser(options);
+
         }
 
-        public IEnumerable<ExcelJsonField> ToExcelJsonSet(Stream stream)
+        public IEnumerable<ExcelJsonField> ToExcelJsonField(Stream stream)
         {
             using var reader = ExcelReaderFactory.CreateReader(stream);
             reader.Reset();
@@ -29,13 +27,12 @@ namespace ExcelJson
                 {
                     continue;
                 }
-                yield return ToExcelJsonResult(reader);
+                yield return ToExcelJsonResult(reader, sheetName);
             } while (reader.NextResult());
         }
 
-        public ExcelJsonField ToExcelJsonResult(IExcelDataReader reader)
+        public ExcelJsonField ToExcelJsonResult(IExcelDataReader reader, string sheetName)
         {
-            var sheetName = reader.Name;
             var definitions = ReadDefinitions(reader);
             var headerRow = ReadHeaderRow(sheetName, definitions);
             var rows = ReadRows(reader, definitions.Count);

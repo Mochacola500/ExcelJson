@@ -1,5 +1,4 @@
-﻿
-namespace ExcelJson.DataModel
+﻿namespace ExcelJson
 {
     public class HeaderField
     {

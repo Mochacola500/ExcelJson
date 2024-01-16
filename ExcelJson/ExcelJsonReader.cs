@@ -1,5 +1,4 @@
 ﻿using ExcelDataReader;
-using ExcelJson.DataModel;
 using System.Globalization;
 
 namespace ExcelJson
@@ -8,7 +7,7 @@ namespace ExcelJson
     {
         protected readonly ExcelJsonOptions m_Options;
 
-        public ExcelJsonReader(ExcelJsonOptions options)
+        protected ExcelJsonReader(ExcelJsonOptions options)
         {
             m_Options = options;
         }
@@ -82,9 +81,8 @@ namespace ExcelJson
             return new(sheetName, headerArray[0], headerArray);
         }
 
-        protected List<string[]> ReadRows(IExcelDataReader reader, int definitionCount)
+        protected IEnumerable<string[]> ReadRows(IExcelDataReader reader, int definitionCount)
         {
-            var rows = new List<string[]>();
             int emptyRowCount = 0;
 
             while (reader.Read())
@@ -97,7 +95,7 @@ namespace ExcelJson
 
                 for (int i = 0; i < emptyRowCount; ++i)
                 {
-                    rows.Add(new string[definitionCount]);
+                    yield return new string[definitionCount];
                 }
 
                 var row = new string[definitionCount];
@@ -107,9 +105,8 @@ namespace ExcelJson
                     var value = Convert.ToString(obj);
                     row[i] = value ?? "";
                 }
-                rows.Add(row);
+                yield return row;
             }
-            return rows;
         }
 
         bool IsEmptyRow(IExcelDataReader reader)

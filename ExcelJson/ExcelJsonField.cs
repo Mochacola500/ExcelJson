@@ -1,4 +1,4 @@
-﻿namespace ExcelJson.DataModel
+﻿namespace ExcelJson
 {
     public class ExcelJsonField
     {

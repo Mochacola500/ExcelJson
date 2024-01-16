@@ -16,7 +16,7 @@ namespace ExcelJson
 
         }
 
-        public IEnumerable<ExcelJsonField> ToExcelJsonField(Stream stream)
+        public IEnumerable<ExcelJsonSheet> ReadExcel(Stream stream)
         {
             using var reader = ExcelReaderFactory.CreateReader(stream);
             reader.Reset();
@@ -27,18 +27,17 @@ namespace ExcelJson
                 {
                     continue;
                 }
-                yield return ToExcelJsonResult(reader, sheetName);
+                yield return ReadExcelJsonSheet(reader, sheetName);
             } while (reader.NextResult());
         }
 
-        ExcelJsonField ToExcelJsonResult(IExcelDataReader reader, string sheetName)
+        ExcelJsonSheet ReadExcelJsonSheet(IExcelDataReader reader, string sheetName)
         {
             var definitions = ReadDefinitions(reader);
             var headerRow = ReadHeaderRow(sheetName, definitions);
             var rows = ReadRows(reader, definitions.Count);
 
             var items = new Dictionary<string, JObject>();
-            var key = headerRow.Key;
             var fields = headerRow.Fields;
             foreach (var row in rows)
             {
@@ -60,7 +59,7 @@ namespace ExcelJson
                         jObject.Add(field.Name, jArray);
                     }
                 }
-                items.Add(key.Name, jObject);
+                items.Add(row[0], jObject);
             }
             var json = JsonConvert.SerializeObject(items);
             return new(sheetName, json);

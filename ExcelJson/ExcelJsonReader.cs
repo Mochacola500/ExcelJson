@@ -78,7 +78,7 @@ namespace ExcelJson
                 arrayLength = 1;
             }
             var headerArray = headerHashSet.ToArray();
-            return new(sheetName, headerArray[0], headerArray);
+            return new(sheetName, headerArray);
         }
 
         protected IEnumerable<string[]> ReadRows(IExcelDataReader reader, int definitionCount)

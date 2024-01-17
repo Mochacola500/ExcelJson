@@ -78,20 +78,18 @@ namespace ExcelJson
         protected IEnumerable<string[]> ReadRows(IExcelDataReader reader, int definitionCount)
         {
             int emptyRowCount = 0;
-
             while (reader.Read())
             {
-                if (IsEmptyRow(reader))
+                if (IsEmptyRow(reader, definitionCount))
                 {
                     ++emptyRowCount;
                     continue;
                 }
-
                 for (int i = 0; i < emptyRowCount; ++i)
                 {
                     yield return new string[definitionCount];
                 }
-
+                emptyRowCount = 0;
                 var row = new string[definitionCount];
                 for (int i = 0; i < definitionCount; ++i)
                 {
@@ -103,9 +101,9 @@ namespace ExcelJson
             }
         }
 
-        bool IsEmptyRow(IExcelDataReader reader)
+        bool IsEmptyRow(IExcelDataReader reader, int definitionCount)
         {
-            for (var i = 0; i < reader.FieldCount; ++i)
+            for (var i = 0; i < definitionCount; ++i)
             {
                 var value = reader.GetValue(i);
                 if (value != null)

@@ -81,10 +81,18 @@ namespace ExcelJson
         {
             if (type == "int")
             {
+                if (string.IsNullOrEmpty(value))
+                {
+                    return 0;
+                }
                 return int.Parse(value);
             }
             else if (type == "float")
             {
+                if (string.IsNullOrEmpty(value))
+                {
+                    return 0f;
+                }
                 return float.Parse(value);
             }
             else if (type == "bool")

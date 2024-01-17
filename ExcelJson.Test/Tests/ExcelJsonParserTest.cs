@@ -1,7 +1,7 @@
-using Newtonsoft.Json;
-using FluentAssertions.Json;
 using System.Text;
+using Newtonsoft.Json;
 using FluentAssertions;
+using FluentAssertions.Json;
 
 namespace ExcelJson
 {
@@ -39,6 +39,46 @@ namespace ExcelJson
         }
 
         [Test]
+        public void ParsingTest1()
+        {
+            var value1 = Enumerable.Range(1, 10)
+                .Select(x => new ParsingTest1_1 { A = x, B = x })
+                .ToDictionary(x => x.A);
+
+            var value2 = Enumerable.Range(1, 10)
+                .Select(x => new ParsingTest1_2 { A = x })
+                .ToDictionary(x => x.A);
+
+            var actual = ReadExcel("ParsingTest1.xlsx").First().Json;
+            var expected1 = JsonConvert.SerializeObject(value1);
+            var expected2 = JsonConvert.SerializeObject(value2);
+
+            expected1.Should().NotBeEquivalentTo(actual);
+            expected2.Should().BeEquivalentTo(actual);
+        }
+
+        [Test]
+        public void ParsingTest2()
+        {
+            try
+            {
+                var value = Enumerable.Range(1, 10)
+                    .Select(x => new ParsingTest2 { A = x, B = x })
+                    .ToDictionary(x => x.A);
+
+                var actual = ReadExcel("ParsingTest2.xlsx").First().Json;
+                var expected = JsonConvert.SerializeObject(value);
+
+                expected.Should().BeEquivalentTo(actual);
+            }
+            catch (Exception ex)
+            {
+                (ex is DuplicatedException).Should()
+                    .BeTrue();
+            }
+        }
+
+        [Test]
         public void FilterSheetTest()
         {
             var actual = ReadExcel("FilterSheetTest.xlsx");
@@ -64,13 +104,13 @@ namespace ExcelJson
             try
             {
                 var actual = ReadExcel("ArrayPlaceholderExceptionTest.xlsx").First().Json;
+                Assert.Fail(actual);
             }
             catch (Exception ex) 
             {
-                (ex is ArrayPlaceholderException).Should().BeTrue();
-                return;
+                (ex is ArrayPlaceholderException).Should()
+                    .BeTrue();
             }
-            Assert.Fail();
         }
 
         [Test]
@@ -79,13 +119,13 @@ namespace ExcelJson
             try
             {
                 var actual = ReadExcel("DuplicatedExceptionTest.xlsx").First().Json;
+                Assert.Fail(actual);
             }
             catch (Exception ex)
             {
-                (ex is DuplicatedException).Should().BeTrue();
-                return;
+                (ex is DuplicatedException).Should()
+                    .BeTrue();
             }
-            Assert.Fail();
         }
 
         [Test]
@@ -94,6 +134,7 @@ namespace ExcelJson
             try
             {
                 var actual = ReadExcel("TooManyTypeTokenExceptionTest.xlsx").First().Json;
+                Assert.Fail(actual);
             }
             catch (Exception ex)
             {
@@ -103,10 +144,8 @@ namespace ExcelJson
                         .Count(x => x == typeTokenException.TypeToken)
                         .Should()
                         .NotBe(1);
-                    return;
                 }
             }
-            Assert.Fail();
         }
 
         [Test]
@@ -115,6 +154,7 @@ namespace ExcelJson
             try
             {
                 var actual = ReadExcel("MissingTypeTokenExceptionTest.xlsx").First().Json;
+                Assert.Fail(actual);
             }
             catch (Exception ex)
             {
@@ -124,21 +164,35 @@ namespace ExcelJson
                         .Count(x => x == typeTokenException.TypeToken)
                         .Should()
                         .Be(0);
-                    return;
                 }
             }
-            Assert.Fail();
         }
     }
 
     public class FilterCoulmnTestSheet1
     {
         public int A { get; set; }
-        // # int B.
     }
 
     public class ArrayTestSheet1
     {
         public int[]? A { get; set; }
+    }
+
+    public class ParsingTest1_1
+    {
+        public int A { get; set; }
+        public int B { get; set; }
+    }
+
+    public class ParsingTest2
+    {
+        public int A { get; set; }
+        public int B { get; set; }
+    }
+
+    public class ParsingTest1_2
+    {
+        public int A { get; set; }
     }
 }

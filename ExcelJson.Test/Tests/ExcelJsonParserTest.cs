@@ -41,6 +41,19 @@ namespace ExcelJson
         }
 
         [Test]
+        public void EmptyTest()
+        {
+            var value = Enumerable.Range(0, 0)
+                .Select(x => new ParsingTest1 { A= x }) 
+                .ToDictionary(x => x.A);
+
+            var actual = ReadExcel("EmptyTest.xlsx").First().Json;
+            var expected = JsonConvert.SerializeObject(value);
+
+            actual.Should().BeEquivalentTo(expected);
+        }
+
+        [Test]
         public void ParsingTest1()
         {
             var value1 = Enumerable.Range(1, 10)

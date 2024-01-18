@@ -2,17 +2,19 @@ using System.Text;
 using Newtonsoft.Json;
 using FluentAssertions;
 using FluentAssertions.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ExcelJson
 {
     public class ExcelJsonParserTest
     {
-        static readonly ExcelJsonParser m_Parser = new();
+        static ExcelJsonParser m_Parser;
 
         [SetUp]
         public void SetUp()
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            m_Parser = new();
         }
 
         static IEnumerable<ExcelJsonSheet> ReadExcel(string name)
@@ -60,35 +62,29 @@ namespace ExcelJson
         [Test]
         public void ParsingTest2()
         {
-            try
-            {
-                var value = Enumerable.Range(1, 10)
-                    .Select(x => new ParsingTest2 { A = x, B = x })
-                    .ToDictionary(x => x.A);
+            var value = Enumerable.Range(1, 10)
+                .Select(x => new ParsingTest2 { A = x, B = x })
+                .ToDictionary(x => x.A);
 
-                var actual = ReadExcel("ParsingTest2.xlsx").First().Json;
-                var expected = JsonConvert.SerializeObject(value);
+            var actual = ReadExcel("ParsingTest2.xlsx").First().Json;
+            var expected = JsonConvert.SerializeObject(value);
 
-                expected.Should().BeEquivalentTo(actual);
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message);
-            }
+            expected.Should().BeEquivalentTo(actual);
+        }
+
+        [Test]
+        public void ParsingTest3()
+        {
+            var json = ReadExcel("ParsingTest3.xlsx").First().Json;
+            var actual = JsonConvert.DeserializeObject<Dictionary<int, ParsingTest3>>(json);
+            actual.Should().NotBeNullOrEmpty();
         }
 
         [Test]
         public void PrimitiveTypeTest()
         {
-            try
-            {
-                var actual = ReadExcel("PrimitiveTypeTest.xlsx").First().Json;
-                actual.Should().NotBeNullOrEmpty();
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message);
-            }
+            var actual = ReadExcel("PrimitiveTypeTest.xlsx").First().Json;
+            actual.Should().NotBeNullOrEmpty();
         }
 
         [Test]
@@ -191,6 +187,30 @@ namespace ExcelJson
     {
         public int A { get; set; }
         public int B { get; set; }
+    }
+
+    public class ParsingTest3
+    {
+        public int Id;
+        public DateTime OrderDate;
+        public string Region;
+        public string Rep;
+        public string Item;
+        public int Units;
+        public float UnitCost;
+        public float Total;
+
+        public ParsingTest3(int id, DateTime orderDate, string region, string rep, string item, int units, float unitCost, float total)
+        {
+            Id = id;
+            OrderDate = orderDate;
+            Region = region;
+            Rep = rep;
+            Item = item;
+            Units = units;
+            UnitCost = unitCost;
+            Total = total;
+        }
     }
 
     public class ArrayTestSheet1

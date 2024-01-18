@@ -9,7 +9,13 @@ namespace ExcelJson
 
         public static IExcelJsonParser CreateJsonParser(ExcelJsonOptions jsonOptions, JsonSerializerSettings jsonSettings)
         {
-            if (Interlocked.Exchange(ref m_IsRegisterCodePage1252, 1) == 0)
+            MakeSureRegisterCP1252();
+            return new ExcelJsonParser(jsonOptions, jsonSettings);
+        }
+
+        static void MakeSureRegisterCP1252()
+        {
+            if (Interlocked.Exchange(ref m_IsRegisterCodePage1252, 1) != 0)
             {
                 var cp1252 = Encoding.GetEncodings()
                     .Where(x => x.CodePage == 1252)
@@ -20,8 +26,6 @@ namespace ExcelJson
                     Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
                 }
             }
-
-            return new ExcelJsonParser(jsonOptions, jsonSettings);
         }
     }
 }

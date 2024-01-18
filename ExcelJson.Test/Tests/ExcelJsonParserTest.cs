@@ -2,19 +2,17 @@ using System.Text;
 using Newtonsoft.Json;
 using FluentAssertions;
 using FluentAssertions.Json;
-using Newtonsoft.Json.Linq;
 
 namespace ExcelJson
 {
     public class ExcelJsonParserTest
     {
-        static ExcelJsonParser m_Parser;
+        static readonly ExcelJsonParser m_Parser = new();
 
         [SetUp]
         public void SetUp()
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            m_Parser = new();
         }
 
         static IEnumerable<ExcelJsonSheet> ReadExcel(string name)
@@ -204,26 +202,14 @@ namespace ExcelJson
 
     public class ParsingTest3
     {
-        public int Id;
-        public DateTime OrderDate;
-        public string Region;
-        public string Rep;
-        public string Item;
-        public int Units;
-        public float UnitCost;
-        public float Total;
-
-        public ParsingTest3(int id, DateTime orderDate, string region, string rep, string item, int units, float unitCost, float total)
-        {
-            Id = id;
-            OrderDate = orderDate;
-            Region = region;
-            Rep = rep;
-            Item = item;
-            Units = units;
-            UnitCost = unitCost;
-            Total = total;
-        }
+        public int Id { get; set; }
+        public DateTime OrderDate { get; set; }
+        public string? Region { get; set; }
+        public string? Rep { get; set; }
+        public string? Item { get; set; }
+        public int Units { get; set; }
+        public float UnitCost { get; set; }
+        public float Total { get; set; }
     }
 
     public class ArrayTestSheet1

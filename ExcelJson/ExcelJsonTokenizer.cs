@@ -20,9 +20,7 @@ namespace ExcelJson
             { "DateTime", ToDateTime }
         };
 
-        public ExcelJsonTokenizer() { }
-
-        public ToJTokenFunction FindTokenizeFunction(string type)
+        public ToJTokenFunction GetTokenizeFunction(string type)
         {
             if (m_DefaultTokenizer.TryGetValue(type, out var function))
             {

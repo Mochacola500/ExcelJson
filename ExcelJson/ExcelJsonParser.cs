@@ -79,7 +79,7 @@ namespace ExcelJson
             var functions = new ToJTokenFunction[fields.Length];
             for (int i = 0; i <  functions.Length; ++i)
             {
-                functions[i] = m_Tokenizer.FindTokenizeFunction(fields[i].Type);
+                functions[i] = m_Tokenizer.GetTokenizeFunction(fields[i].Type);
             }
             return functions;
         }

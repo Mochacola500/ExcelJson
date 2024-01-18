@@ -2,11 +2,11 @@
 
 namespace ExcelJson
 {
+    public delegate JToken ToJTokenFunction(string value);
+
     public class ExcelJsonTokenizer
     {
-        public delegate JToken ToJToken(string value);
-
-        static readonly Dictionary<string, ToJToken> g_DefaultTokenizer = new()
+        static readonly Dictionary<string, ToJTokenFunction> g_DefaultTokenizer = new()
         {
             { "int", ToInt32 },
             { "long", ToInt64 },
@@ -16,9 +16,10 @@ namespace ExcelJson
             { "uint", ToUInt32 },
             { "ulong", ToUInt64 },
             { "string", ToString },
+            { "bool", ToBoolean },
         };
 
-        public ToJToken FindTokenizeFunction(string type)
+        public ToJTokenFunction FindTokenizeFunction(string type)
         {
             if (g_DefaultTokenizer.TryGetValue(type, out var function))
             {
@@ -88,6 +89,15 @@ namespace ExcelJson
                 return 0UL;
             }
             return ulong.Parse(value);
+        }
+
+        static JToken ToBoolean(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return false;
+            }
+            return bool.Parse(value);
         }
 
         static JToken ToString(string value)

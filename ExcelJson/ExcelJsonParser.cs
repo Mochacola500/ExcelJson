@@ -7,15 +7,15 @@ namespace ExcelJson
     public class ExcelJsonParser : ExcelJsonReader
     {
         readonly ExcelJsonTokenizer m_Tokenizer;
+        readonly JsonSerializerSettings m_Settings;
 
-        public ExcelJsonParser() : this(new())
-        {
-
-        }
-
-        public ExcelJsonParser(ExcelJsonOptions options) : base(options)
+        public ExcelJsonParser() : this(new(), new()) { }
+        public ExcelJsonParser(ExcelJsonOptions options) : this(options, new()) { }
+        public ExcelJsonParser(JsonSerializerSettings settings) : this(new(), settings) { }
+        public ExcelJsonParser(ExcelJsonOptions options, JsonSerializerSettings settings) : base(options)
         {
             m_Tokenizer = new();
+            m_Settings = settings;
         }
 
         public IEnumerable<ExcelJsonSheet> ReadExcel(Stream stream)
@@ -67,7 +67,7 @@ namespace ExcelJson
                 }
                 items.Add(row[0], jObject);
             }
-            var json = JsonConvert.SerializeObject(items);
+            var json = JsonConvert.SerializeObject(items, m_Settings);
             return new(sheetName, json);
         }
 

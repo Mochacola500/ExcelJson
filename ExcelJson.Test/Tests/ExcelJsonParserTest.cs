@@ -1,4 +1,5 @@
 using System.Text;
+using System.Globalization;
 using Newtonsoft.Json;
 using FluentAssertions;
 using FluentAssertions.Json;
@@ -7,7 +8,10 @@ namespace ExcelJson
 {
     public class ExcelJsonParserTest
     {
-        static readonly ExcelJsonParser m_Parser = new();
+        static readonly ExcelJsonParser m_Parser = new(new JsonSerializerSettings
+        {
+            Culture = new CultureInfo("ko-KR"),
+        });
 
         [SetUp]
         public void SetUp()

@@ -21,6 +21,7 @@ namespace ExcelJson
         public IEnumerable<ExcelJsonSheet> ReadExcel(Stream stream)
         {
             using var reader = ExcelReaderFactory.CreateReader(stream);
+            
             reader.Reset();
             do
             {
@@ -39,12 +40,17 @@ namespace ExcelJson
             var headerRow = ReadHeaderRow(sheetName, definitions);
             var tokenizers = ReadTokenizers(headerRow);
             var rows = ReadRows(reader, definitions.Count);
-
-            var items = new Dictionary<string, JObject>();
+            if (!rows.Any())
+            {
+                return new(sheetName, "");
+            }
+            var items = new Dictionary<JToken, JObject>();
             var fields = headerRow.Fields;
             foreach (var row in rows)
             {
                 var jObject = new JObject();
+                var key = tokenizers[0].Invoke(row[0]);
+                items.Add(key, jObject);
                 for (int i = 0; i < fields.Length; ++i)
                 {
                     var field = fields[i];
@@ -66,7 +72,6 @@ namespace ExcelJson
                         jObject.Add(fieldName, jArray);
                     }
                 }
-                items.Add(row[0], jObject);
             }
             var json = JsonConvert.SerializeObject(items, m_Settings);
             return new(sheetName, json);

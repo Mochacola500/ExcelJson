@@ -6,7 +6,7 @@ namespace ExcelJson
 
     public class ExcelJsonTokenizer
     {
-        static readonly Dictionary<string, ToJTokenFunction> g_DefaultTokenizer = new()
+        static readonly Dictionary<string, ToJTokenFunction> m_DefaultTokenizer = new()
         {
             { "int", ToInt32 },
             { "long", ToInt64 },
@@ -17,11 +17,14 @@ namespace ExcelJson
             { "ulong", ToUInt64 },
             { "string", ToString },
             { "bool", ToBoolean },
+            { "DateTime", ToDateTime }
         };
+
+        public ExcelJsonTokenizer() { }
 
         public ToJTokenFunction FindTokenizeFunction(string type)
         {
-            if (g_DefaultTokenizer.TryGetValue(type, out var function))
+            if (m_DefaultTokenizer.TryGetValue(type, out var function))
             {
                 return function;
             }
@@ -103,6 +106,15 @@ namespace ExcelJson
         static JToken ToString(string value)
         {
             return value;
+        }
+
+        static JToken ToDateTime(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new ArgumentNullException("Date time is null or empty.");
+            }
+            return DateTime.Parse(value);
         }
     }
 }

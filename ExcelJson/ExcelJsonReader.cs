@@ -1,5 +1,5 @@
-﻿using ExcelDataReader;
-using System.Globalization;
+﻿using System.Globalization;
+using ExcelDataReader;
 
 namespace ExcelJson
 {
@@ -14,9 +14,10 @@ namespace ExcelJson
 
         protected List<string> ReadDefinitions(IExcelDataReader reader)
         {
+            // Read header row.
+            reader.Read();
             int fieldCount = reader.FieldCount;
             var definitions = new List<string>(fieldCount);
-            reader.Read(); // Read header row.
             for (int i = 0; i < fieldCount; ++i)
             {
                 var value = reader.GetValue(i);

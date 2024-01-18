@@ -6,6 +6,8 @@ namespace ExcelJson
 {
     public class ExcelJsonParser : ExcelJsonReader
     {
+        readonly ExcelJsonTokenizer m_Tokenizer;
+
         public ExcelJsonParser() : this(new())
         {
 
@@ -13,7 +15,7 @@ namespace ExcelJson
 
         public ExcelJsonParser(ExcelJsonOptions options) : base(options)
         {
-
+            m_Tokenizer = new();
         }
 
         public IEnumerable<ExcelJsonSheet> ReadExcel(Stream stream)
@@ -35,6 +37,7 @@ namespace ExcelJson
         {
             var definitions = ReadDefinitions(reader);
             var headerRow = ReadHeaderRow(sheetName, definitions);
+            var tokenizers = ReadTokenizers(headerRow).ToArray();
             var rows = ReadRows(reader, definitions.Count);
 
             var items = new Dictionary<string, JObject>();
@@ -45,16 +48,19 @@ namespace ExcelJson
                 for (int i = 0; i < fields.Length; ++i)
                 {
                     var field = fields[i];
+                    var tokenizer = tokenizers[i];
                     if (field.Length == 1)
                     {
-                        AddObject(jObject, row[i], field);
+                        var token = tokenizer.Invoke(row[i]);
+                        jObject.Add(field.Name, token);
                     }
                     else
                     {
                         var jArray = new JArray();
                         for (int j = i; j < field.Length; ++j)
                         {
-                            AddPrimitiveToArray(jArray, field.Type, row[j]);
+                            var token = tokenizer.Invoke(row[j]);
+                            jArray.Add(token);
                         }
                         jObject.Add(field.Name, jArray);
                     }
@@ -65,43 +71,11 @@ namespace ExcelJson
             return new(sheetName, json);
         }
 
-        // Need optimization.
-        void AddObject(JObject root, string value, HeaderField field)
+        IEnumerable<ExcelJsonTokenizer.ToJToken> ReadTokenizers(HeaderRow headerRow)
         {
-            root.Add(field.Name, Parse(field.Type, value));
-        }
-
-        // Need optimization.
-        void AddPrimitiveToArray(JArray root, string type, string value)
-        {
-            root.Add(Parse(type, value));
-        }
-
-        JToken Parse(string type, string value)
-        {
-            if (type == "int")
+            foreach (var field in headerRow.Fields)
             {
-                if (string.IsNullOrEmpty(value))
-                {
-                    return 0;
-                }
-                return int.Parse(value);
-            }
-            else if (type == "float")
-            {
-                if (string.IsNullOrEmpty(value))
-                {
-                    return 0f;
-                }
-                return float.Parse(value);
-            }
-            else if (type == "bool")
-            {
-                return bool.Parse(value);
-            }
-            else
-            {
-                return value;
+                yield return m_Tokenizer.FindTokenizeFunction(field.Type);
             }
         }
     }

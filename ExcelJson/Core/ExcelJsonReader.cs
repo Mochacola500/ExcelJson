@@ -3,7 +3,7 @@ using ExcelDataReader;
 
 namespace ExcelJson
 {
-    public abstract class ExcelJsonReader
+    internal abstract class ExcelJsonReader
     {
         protected readonly ExcelJsonOptions m_Options;
 

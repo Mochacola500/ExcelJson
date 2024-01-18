@@ -5,7 +5,7 @@ namespace ExcelJson
 {
     public delegate JToken JTokenFunction(string value);
 
-    public class ExcelJsonTokenizer
+    internal class ExcelJsonTokenizer
     {
         static readonly Dictionary<string, JTokenFunction> m_DefaultJTokens = new()
         {
@@ -23,28 +23,17 @@ namespace ExcelJson
             { "byte", ToByte },
         };
 
-        readonly Dictionary<string, JTokenFunction> m_CustomJTokens;
         readonly JsonSerializerSettings m_Settings;
 
         public ExcelJsonTokenizer() : this(new()) { }
         public ExcelJsonTokenizer(JsonSerializerSettings settings)
         {
             m_Settings = settings;
-            m_CustomJTokens = new();
-        }
-
-        public void AddJTokenFunction(string key, JTokenFunction value)
-        {
-            m_CustomJTokens.Add(key, value);
         }
 
         public JTokenFunction GetTokenizeFunction(string type)
         {
-            if (m_CustomJTokens.TryGetValue(type, out var function))
-            {
-                return function;
-            }
-            if (m_DefaultJTokens.TryGetValue(type, out function))
+            if (m_DefaultJTokens.TryGetValue(type, out var function))
             {
                 return function;
             }

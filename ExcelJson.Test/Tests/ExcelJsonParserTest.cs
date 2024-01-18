@@ -1,4 +1,3 @@
-using System.Text;
 using System.Globalization;
 using Newtonsoft.Json;
 using FluentAssertions;
@@ -8,16 +7,10 @@ namespace ExcelJson
 {
     public class ExcelJsonParserTest
     {
-        static readonly ExcelJsonParser m_Parser = new(new JsonSerializerSettings
+        static readonly IExcelJsonParser m_Parser = ExcelJsonFactory.CreateJsonParser(new(), new()
         {
             Culture = CultureInfo.CurrentCulture,
         });
-
-        [SetUp]
-        public void SetUp()
-        {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        }
 
         static IEnumerable<ExcelJsonSheet> ReadExcel(string name)
         {

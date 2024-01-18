@@ -4,23 +4,12 @@ using Newtonsoft.Json;
 
 namespace ExcelJson
 {
-    public class ExcelJsonParser : ExcelJsonReader
+    internal class ExcelJsonParser : ExcelJsonReader, IExcelJsonParser
     {
         readonly ExcelJsonTokenizer m_Tokenizer;
         readonly JsonSerializerSettings m_JsonSettings;
 
-        public ExcelJsonTokenizer Tokenizer
-        {
-            get
-            {
-                return m_Tokenizer;
-            }
-        }
-
-        public ExcelJsonParser() : this(new(), new()) { }
-        public ExcelJsonParser(ExcelJsonOptions jsonOptions) : this(jsonOptions, new()) { }
-        public ExcelJsonParser(JsonSerializerSettings jsonSettings) : this(new(), jsonSettings) { }
-        public ExcelJsonParser(ExcelJsonOptions jsonOptions, JsonSerializerSettings jsonSettings) : base(jsonOptions)
+        internal ExcelJsonParser(ExcelJsonOptions jsonOptions, JsonSerializerSettings jsonSettings) : base(jsonOptions)
         {
             m_Tokenizer = new(jsonSettings);
             m_JsonSettings = jsonSettings;
@@ -28,7 +17,12 @@ namespace ExcelJson
 
         public IEnumerable<ExcelJsonSheet> ParseExcel(Stream stream)
         {
-            using var reader = ExcelReaderFactory.CreateReader(stream);
+            return ParseExcel(stream, new());
+        }
+
+        public IEnumerable<ExcelJsonSheet> ParseExcel(Stream stream, ExcelReaderConfiguration excelReaderConfig)
+        {
+            using var reader = ExcelReaderFactory.CreateReader(stream, excelReaderConfig);
             reader.Reset();
             do
             {

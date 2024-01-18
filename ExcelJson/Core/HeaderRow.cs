@@ -1,6 +1,6 @@
 ﻿namespace ExcelJson
 {
-    public class HeaderRow
+    internal class HeaderRow
     {
         public string Name { get; }
         public HeaderField[] Fields { get; }

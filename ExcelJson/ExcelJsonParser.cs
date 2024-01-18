@@ -9,12 +9,20 @@ namespace ExcelJson
         readonly ExcelJsonTokenizer m_Tokenizer;
         readonly JsonSerializerSettings m_Settings;
 
+        public ExcelJsonTokenizer Tokenizer
+        {
+            get
+            {
+                return m_Tokenizer;
+            }
+        }
+
         public ExcelJsonParser() : this(new(), new()) { }
         public ExcelJsonParser(ExcelJsonOptions options) : this(options, new()) { }
         public ExcelJsonParser(JsonSerializerSettings settings) : this(new(), settings) { }
         public ExcelJsonParser(ExcelJsonOptions options, JsonSerializerSettings settings) : base(options)
         {
-            m_Tokenizer = new();
+            m_Tokenizer = new(settings);
             m_Settings = settings;
         }
 
@@ -37,8 +45,8 @@ namespace ExcelJson
         {
             var definitions = ReadDefinitions(reader);
             var headerRow = ReadHeaderRow(sheetName, definitions);
-            var tokenizers = ReadTokenizers(headerRow);
             var rows = ReadRows(reader, definitions.Count);
+            var jTokenFunctions = ReadJTokenFunctions(headerRow);
 
             var items = new Dictionary<JToken, JObject>();
             var fields = headerRow.Fields;
@@ -49,10 +57,10 @@ namespace ExcelJson
                 {
                     var field = fields[i];
                     var fieldName = field.Name;
-                    var tokenizer = tokenizers[i];
+                    var jTokenFunction = jTokenFunctions[i];
                     if (field.Length == 1)
                     {
-                        var token = tokenizer.Invoke(row[i]);
+                        var token = jTokenFunction.Invoke(row[i]);
                         jObject.Add(fieldName, token);
                     }
                     else
@@ -60,23 +68,23 @@ namespace ExcelJson
                         var jArray = new JArray();
                         for (int j = i; j < field.Length; ++j)
                         {
-                            var token = tokenizer.Invoke(row[j]);
+                            var token = jTokenFunction.Invoke(row[j]);
                             jArray.Add(token);
                         }
                         jObject.Add(fieldName, jArray);
                     }
                 }
-                var key = tokenizers[0].Invoke(row[0]);
+                var key = jTokenFunctions[0].Invoke(row[0]);
                 items.Add(key, jObject);
             }
             var json = JsonConvert.SerializeObject(items, m_Settings);
             return new(sheetName, json);
         }
 
-        ToJTokenFunction[] ReadTokenizers(HeaderRow headerRow)
+        JTokenFunction[] ReadJTokenFunctions(HeaderRow headerRow)
         {
             var fields = headerRow.Fields;
-            var functions = new ToJTokenFunction[fields.Length];
+            var functions = new JTokenFunction[fields.Length];
             for (int i = 0; i <  functions.Length; ++i)
             {
                 functions[i] = m_Tokenizer.GetTokenizeFunction(fields[i].Type);

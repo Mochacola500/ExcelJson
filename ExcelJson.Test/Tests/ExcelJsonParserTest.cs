@@ -10,7 +10,7 @@ namespace ExcelJson
     {
         static readonly ExcelJsonParser m_Parser = new(new JsonSerializerSettings
         {
-            Culture = new CultureInfo("ko-KR"),
+            Culture = CultureInfo.CurrentCulture,
         });
 
         [SetUp]

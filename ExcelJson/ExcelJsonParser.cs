@@ -26,7 +26,7 @@ namespace ExcelJson
             m_Settings = settings;
         }
 
-        public IEnumerable<ExcelJsonSheet> ReadExcel(Stream stream)
+        public IEnumerable<ExcelJsonSheet> ParseExcel(Stream stream)
         {
             using var reader = ExcelReaderFactory.CreateReader(stream);
             reader.Reset();

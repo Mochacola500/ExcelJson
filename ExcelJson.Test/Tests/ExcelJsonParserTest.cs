@@ -23,7 +23,7 @@ namespace ExcelJson
         {
             var path = Path.Combine("../../../Excels/", name);
             using var stream = File.OpenRead(path);
-            foreach (var sheet in m_Parser.ReadExcel(stream))
+            foreach (var sheet in m_Parser.ParseExcel(stream))
             {
                 yield return sheet;
             }

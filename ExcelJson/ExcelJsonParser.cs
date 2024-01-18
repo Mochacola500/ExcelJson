@@ -37,7 +37,7 @@ namespace ExcelJson
         {
             var definitions = ReadDefinitions(reader);
             var headerRow = ReadHeaderRow(sheetName, definitions);
-            var tokenizers = ReadTokenizers(headerRow).ToArray();
+            var tokenizers = ReadTokenizers(headerRow);
             var rows = ReadRows(reader, definitions.Count);
 
             var items = new Dictionary<string, JObject>();
@@ -48,11 +48,12 @@ namespace ExcelJson
                 for (int i = 0; i < fields.Length; ++i)
                 {
                     var field = fields[i];
+                    var fieldName = field.Name;
                     var tokenizer = tokenizers[i];
                     if (field.Length == 1)
                     {
                         var token = tokenizer.Invoke(row[i]);
-                        jObject.Add(field.Name, token);
+                        jObject.Add(fieldName, token);
                     }
                     else
                     {
@@ -62,7 +63,7 @@ namespace ExcelJson
                             var token = tokenizer.Invoke(row[j]);
                             jArray.Add(token);
                         }
-                        jObject.Add(field.Name, jArray);
+                        jObject.Add(fieldName, jArray);
                     }
                 }
                 items.Add(row[0], jObject);
@@ -71,12 +72,15 @@ namespace ExcelJson
             return new(sheetName, json);
         }
 
-        IEnumerable<ExcelJsonTokenizer.ToJToken> ReadTokenizers(HeaderRow headerRow)
+        ToJTokenFunction[] ReadTokenizers(HeaderRow headerRow)
         {
-            foreach (var field in headerRow.Fields)
+            var fields = headerRow.Fields;
+            var functions = new ToJTokenFunction[fields.Length];
+            for (int i = 0; i <  functions.Length; ++i)
             {
-                yield return m_Tokenizer.FindTokenizeFunction(field.Type);
+                functions[i] = m_Tokenizer.FindTokenizeFunction(fields[i].Type);
             }
+            return functions;
         }
     }
 }

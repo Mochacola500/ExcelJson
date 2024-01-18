@@ -29,7 +29,7 @@ namespace ExcelJson
         public void FilterColumnTest()
         {
             var value = Enumerable.Range(1, 10)
-                .Select(x => new FilterCoulmnTestSheet1 { A = x })
+                .Select(x => new ParsingTest1 { A = x })
                 .ToDictionary(x => x.A);
 
             var actual = ReadExcel("FilterColumnTest.xlsx").First().Json;
@@ -42,11 +42,11 @@ namespace ExcelJson
         public void ParsingTest1()
         {
             var value1 = Enumerable.Range(1, 10)
-                .Select(x => new ParsingTest1_1 { A = x, B = x })
+                .Select(x => new ParsingTest2 { A = x, B = x })
                 .ToDictionary(x => x.A);
 
             var value2 = Enumerable.Range(1, 10)
-                .Select(x => new ParsingTest1_2 { A = x })
+                .Select(x => new ParsingTest1 { A = x })
                 .ToDictionary(x => x.A);
 
             var actual = ReadExcel("ParsingTest1.xlsx").First().Json;
@@ -73,8 +73,21 @@ namespace ExcelJson
             }
             catch (Exception ex)
             {
-                (ex is DuplicatedException).Should()
-                    .BeTrue();
+                Assert.Fail(ex.Message);
+            }
+        }
+
+        [Test]
+        public void PrimitiveTypeTest()
+        {
+            try
+            {
+                var actual = ReadExcel("PrimitiveTypeTest.xlsx").First().Json;
+                actual.Should().NotBeNullOrEmpty();
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
             }
         }
 
@@ -169,20 +182,9 @@ namespace ExcelJson
         }
     }
 
-    public class FilterCoulmnTestSheet1
+    public class ParsingTest1
     {
         public int A { get; set; }
-    }
-
-    public class ArrayTestSheet1
-    {
-        public int[]? A { get; set; }
-    }
-
-    public class ParsingTest1_1
-    {
-        public int A { get; set; }
-        public int B { get; set; }
     }
 
     public class ParsingTest2
@@ -191,8 +193,8 @@ namespace ExcelJson
         public int B { get; set; }
     }
 
-    public class ParsingTest1_2
+    public class ArrayTestSheet1
     {
-        public int A { get; set; }
+        public int[]? A { get; set; }
     }
 }

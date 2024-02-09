@@ -1,118 +1,122 @@
-﻿using System.Globalization;
-using ExcelDataReader;
+﻿using ExcelDataReader;
 
-namespace ExcelJson
+namespace ExcelJson.Core
 {
-    internal abstract class ExcelJsonReader
+    public class ExcelJsonReader : IDisposable
     {
-        protected readonly ExcelJsonOptions m_Options;
+        readonly ExcelJsonOptions m_ExcelJsonOptions;
+        readonly IExcelDataReader m_ExcelDataReader;
 
-        protected ExcelJsonReader(ExcelJsonOptions options)
+        public ExcelJsonReader(IExcelDataReader excelDataReader, ExcelJsonOptions excelJsonOptions)
         {
-            m_Options = options;
+            m_ExcelDataReader = excelDataReader;
+            m_ExcelJsonOptions = excelJsonOptions;
         }
 
-        protected List<string> ReadDefinitions(IExcelDataReader reader)
+        public IEnumerable<ExcelJsonSheet> ReadExcel()
         {
-            // Read header row.
-            reader.Read();
-            int fieldCount = reader.FieldCount;
-            var definitions = new List<string>(fieldCount);
-            for (int i = 0; i < fieldCount; ++i)
+            m_ExcelDataReader.Reset();
+            do
             {
-                var value = reader.GetValue(i);
-                var name = Convert.ToString(value, CultureInfo.CurrentCulture);
-                if (string.IsNullOrEmpty(name))
-                {
-                    break;
-                }
-                definitions.Add(name);
-            }
-            return definitions;
-        }
-
-        protected HeaderRow ReadHeaderRow(string sheetName, List<string> definitions)
-        {
-            int count = definitions.Count;
-            var headerHashSet = new Dictionary<string, HeaderField>(count);
-            var prevName = "";
-
-            for (int i = 0; i < count; ++i)
-            {
-                var definition = definitions[i];
-
-                if (definition.StartsWith(m_Options.FilterColumnToken))
+                var sheetName = m_ExcelDataReader.Name;
+                if (sheetName.StartsWith(m_ExcelJsonOptions.FilterSheetToken))
                 {
                     continue;
                 }
-                if (definition == m_Options.ArrayPlaceholder)
+                yield return ReadCurrentSheet();
+            } while (m_ExcelDataReader.NextResult());
+        }
+
+        public void Dispose()
+        {
+            m_ExcelDataReader.Dispose();
+        }
+
+        ExcelJsonSheet ReadCurrentSheet()
+        {
+            m_ExcelDataReader.Read();
+            var definitions = ReadDefinitions();
+            var header = ConvertToHeader(definitions);
+            var rows = ReadRows(definitions.Length);
+            return new(m_ExcelDataReader.Name, header, rows);
+        }
+
+        ExcelHeader ConvertToHeader(string[] definitions)
+        {
+            int totalCount = definitions.Length;
+            var headerLookup = new Dictionary<string, HeaderField>(totalCount);
+            var sheetName = m_ExcelDataReader.Name;
+            var prevDefinition = string.Empty;
+
+            for (int i = 0; i < totalCount; ++i)
+            {
+                var definition = definitions[i];
+                if (definition.StartsWith(m_ExcelJsonOptions.FilterColumnToken))
                 {
-                    if (prevName == "")
+                    continue;
+                }
+                if (definition == m_ExcelJsonOptions.ArrayPlaceholder)
+                {
+                    if (prevDefinition == "")
                     {
                         throw new ArrayPlaceholderException(sheetName, i);
                     }
-                    if (headerHashSet.TryGetValue(prevName, out var array))
+                    if (headerLookup.TryGetValue(prevDefinition, out var array))
                     {
-                        ++array.Length; 
+                        ++array.ArrayLength; 
                     }
-                    continue;
                 }
-                var nameAndType = definition.Split(m_Options.TypeToken, StringSplitOptions.TrimEntries);
-                // In most cases, length is 2.
-                if (nameAndType.Length != 2)
+                else
                 {
-                    throw new TypeTokenException(sheetName, definition, m_Options.TypeToken);
+                    var nameAndType = definition.Split(m_ExcelJsonOptions.TypeToken, StringSplitOptions.TrimEntries);
+                    // In most cases, length is 2.
+                    if (nameAndType.Length != 2)
+                    {
+                        throw new TypeTokenException(sheetName, definition, m_ExcelJsonOptions.TypeToken);
+                    }
+                    var type = nameAndType[1];
+                    var name = nameAndType[0];
+                    var headerField = new HeaderField(type, name, 1);
+                    if (!headerLookup.TryAdd(name, headerField))
+                    {
+                        throw new DuplicatedException(sheetName, definition);
+                    }
+                    prevDefinition = name;
                 }
-                var type = nameAndType[1];
-                var name = nameAndType[0];
-                var headerField = new HeaderField(type, name, 1);
-                if (!headerHashSet.TryAdd(name, headerField))
-                {
-                    throw new DuplicatedException(sheetName, definition);
-                }
-                prevName = name;
             }
-            var headerArray = headerHashSet.Values.ToArray();
-            return new(sheetName, headerArray);
+            var headerArray = headerLookup.Values.ToArray();
+            return new(sheetName, headerArray, totalCount);
         }
 
-        protected IEnumerable<string[]> ReadRows(IExcelDataReader reader, int definitionCount)
+        string[] ReadDefinitions()
         {
-            int emptyRowCount = 0;
-            while (reader.Read())
+            int fieldCount = m_ExcelDataReader.FieldCount;
+            var definitions = new List<string>();
+            for (int i = 0; i < fieldCount; ++i)
             {
-                if (IsEmptyRow(reader, definitionCount))
+                var value = m_ExcelDataReader.GetString(i);
+                // Separate the data area and non-data using an empty column.
+                if (string.IsNullOrEmpty(value))
                 {
-                    ++emptyRowCount;
-                    continue;
+                    break;
                 }
-                for (int i = 0; i < emptyRowCount; ++i)
-                {
-                    yield return new string[definitionCount];
-                }
-                emptyRowCount = 0;
+                definitions.Add(value);
+            }
+            return definitions.ToArray();
+        }
+
+        IEnumerable<string[]> ReadRows(int definitionCount)
+        {   
+            while (m_ExcelDataReader.Read())
+            {
                 var row = new string[definitionCount];
                 for (int i = 0; i < definitionCount; ++i)
                 {
-                    var obj = reader.GetValue(i);
-                    var value = Convert.ToString(obj);
+                    var value = m_ExcelDataReader.GetString(i);
                     row[i] = value ?? "";
                 }
                 yield return row;
             }
-        }
-
-        bool IsEmptyRow(IExcelDataReader reader, int definitionCount)
-        {
-            for (var i = 0; i < definitionCount; ++i)
-            {
-                var value = reader.GetValue(i);
-                if (value != null)
-                {
-                    return false;
-                }
-            }
-            return true;
         }
     }
 }

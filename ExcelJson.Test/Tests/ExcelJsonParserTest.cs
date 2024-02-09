@@ -1,24 +1,21 @@
-using System.Globalization;
 using Newtonsoft.Json;
 using FluentAssertions;
 using FluentAssertions.Json;
+using ExcelDataReader;
 
 namespace ExcelJson
 {
     public class ExcelJsonParserTest
     {
-        static readonly IExcelJsonParser m_Parser = ExcelJsonFactory.CreateJsonParser(new(), new()
-        {
-            Culture = CultureInfo.CurrentCulture,
-        });
-
-        static IEnumerable<ExcelJsonSheet> ReadExcel(string name)
+        static IEnumerable<string> ReadExcel(string name)
         {
             var path = Path.Combine("../../../Excels/", name);
             using var stream = File.OpenRead(path);
-            foreach (var sheet in m_Parser.ParseExcel(stream))
+            using var jsonReader = ExcelJsonFactory.CreateJsonReader(stream, new());
+            foreach (var sheet in jsonReader.ReadExcel())
             {
-                yield return sheet;
+                var serializer = ExcelJsonFactory.CreateSerializer(new());
+                yield return serializer.ToJson(sheet);
             }
         }
 
@@ -29,7 +26,7 @@ namespace ExcelJson
                 .Select(x => new ParsingTest1 { A = x })
                 .ToDictionary(x => x.A);
 
-            var actual = ReadExcel("FilterColumnTest.xlsx").First().Json;
+            var actual = ReadExcel("FilterColumnTest.xlsx").First();
             var expected = JsonConvert.SerializeObject(value);
 
             expected.Should().BeEquivalentTo(actual);
@@ -42,7 +39,7 @@ namespace ExcelJson
                 .Select(x => new ParsingTest1 { A= x }) 
                 .ToDictionary(x => x.A);
 
-            var actual = ReadExcel("EmptyTest.xlsx").First().Json;
+            var actual = ReadExcel("EmptyTest.xlsx").First();
             var expected = JsonConvert.SerializeObject(value);
 
             actual.Should().BeEquivalentTo(expected);
@@ -59,7 +56,7 @@ namespace ExcelJson
                 .Select(x => new ParsingTest1 { A = x })
                 .ToDictionary(x => x.A);
 
-            var actual = ReadExcel("ParsingTest1.xlsx").First().Json;
+            var actual = ReadExcel("ParsingTest1.xlsx").First();
             var expected1 = JsonConvert.SerializeObject(value1);
             var expected2 = JsonConvert.SerializeObject(value2);
 
@@ -74,7 +71,7 @@ namespace ExcelJson
                 .Select(x => new ParsingTest2 { A = x, B = x })
                 .ToDictionary(x => x.A);
 
-            var actual = ReadExcel("ParsingTest2.xlsx").First().Json;
+            var actual = ReadExcel("ParsingTest2.xlsx").First();
             var expected = JsonConvert.SerializeObject(value);
 
             expected.Should().BeEquivalentTo(actual);
@@ -83,7 +80,7 @@ namespace ExcelJson
         [Test]
         public void ParsingTest3()
         {
-            var json = ReadExcel("ParsingTest3.xlsx").First().Json;
+            var json = ReadExcel("ParsingTest3.xlsx").First();
             var actual = JsonConvert.DeserializeObject<Dictionary<int, ParsingTest3>>(json);
             actual.Should().NotBeNullOrEmpty();
         }
@@ -91,7 +88,7 @@ namespace ExcelJson
         [Test]
         public void PrimitiveTypeTest()
         {
-            var actual = ReadExcel("PrimitiveTypeTest.xlsx").First().Json;
+            var actual = ReadExcel("PrimitiveTypeTest.xlsx").First();
             actual.Should().NotBeNullOrEmpty();
         }
 
@@ -109,7 +106,7 @@ namespace ExcelJson
                 .Select(x => new ArrayTestSheet1 { A = [x * 10, x, x] })
                 .ToDictionary(x => x.A == null ? -1 : x.A[0]);
 
-            var actual = ReadExcel("ArrayTest.xlsx").First().Json;
+            var actual = ReadExcel("ArrayTest.xlsx").First();
             var expected = JsonConvert.SerializeObject(value);
 
             expected.Should().BeEquivalentTo(actual);
@@ -120,7 +117,7 @@ namespace ExcelJson
         {
             try
             {
-                var actual = ReadExcel("ArrayPlaceholderExceptionTest.xlsx").First().Json;
+                var actual = ReadExcel("ArrayPlaceholderExceptionTest.xlsx").First();
                 Assert.Fail(actual);
             }
             catch (Exception ex) 
@@ -135,7 +132,7 @@ namespace ExcelJson
         {
             try
             {
-                var actual = ReadExcel("DuplicatedExceptionTest.xlsx").First().Json;
+                var actual = ReadExcel("DuplicatedExceptionTest.xlsx").First();
                 Assert.Fail(actual);
             }
             catch (Exception ex)
@@ -150,7 +147,7 @@ namespace ExcelJson
         {
             try
             {
-                var actual = ReadExcel("TooManyTypeTokenExceptionTest.xlsx").First().Json;
+                var actual = ReadExcel("TooManyTypeTokenExceptionTest.xlsx").First();
                 Assert.Fail(actual);
             }
             catch (Exception ex)
@@ -170,7 +167,7 @@ namespace ExcelJson
         {
             try
             {
-                var actual = ReadExcel("MissingTypeTokenExceptionTest.xlsx").First().Json;
+                var actual = ReadExcel("MissingTypeTokenExceptionTest.xlsx").First();
                 Assert.Fail(actual);
             }
             catch (Exception ex)
